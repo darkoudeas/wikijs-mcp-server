@@ -28,12 +28,14 @@ case "$1" in
     "server")
         print_info "Starting WikiJS MCP Server..."
         
-        # Check if config exists
+        # Accept either a mounted .env file or direct environment variables.
         if [ -f "$ENV_FILE" ]; then
             print_success "Found configuration file"
+        elif [ -n "$WIKIJS_URL" ] && [ -n "$WIKIJS_API_KEY" ]; then
+            print_success "Using configuration from environment variables"
         else
             print_error "No configuration found!"
-            echo "Please create a .env file in the project root with your WikiJS settings."
+            echo "Provide /app/.env or set WIKIJS_URL and WIKIJS_API_KEY environment variables."
             exit 1
         fi
         

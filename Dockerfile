@@ -35,15 +35,16 @@ COPY . .
 RUN mkdir -p /app/config && \
     chown -R wikijs:wikijs /app
 
+# Create entrypoint script
+COPY --chown=wikijs:wikijs docker-entrypoint.sh /usr/local/bin/
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Switch to non-root user
 USER wikijs
 
-# Expose MCP server port (not HTTP, but for documentation)
-EXPOSE 3000
-
-# Create entrypoint script
-COPY --chown=wikijs:wikijs docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Expose MCP server HTTP port
+EXPOSE 8000
 
 # Default command
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
