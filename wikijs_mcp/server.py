@@ -4,6 +4,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 from mcp.server import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import TextContent
 from .client import WikiJSClient
 from .config import WikiJSConfig
@@ -291,6 +292,30 @@ class WikiJSMCPServer:
 
                 return response
 
+    def _configure_http_transport(self, bind_host: str) -> None:
+        """Configure FastMCP HTTP settings for the current deployment."""
+        # Public host can differ from bind host (e.g., bind 0.0.0.0 behind ingress)
+        public_host = self.config.mcp_public_host or bind_host
+        self.app.settings.host = public_host
+
+        if self.config.mcp_enable_dns_rebinding_protection:
+            allowed_hosts = [h for h in self.config.mcp_allowed_hosts if h]
+            if not allowed_hosts:
+                allowed_hosts = [public_host, f"{public_host}:*"]
+
+            allowed_origins = [o for o in self.config.mcp_allowed_origins if o]
+            self.app.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=True,
+                allowed_hosts=allowed_hosts,
+                allowed_origins=allowed_origins,
+            )
+        else:
+            # Disable strict host/origin checks unless explicitly enabled,
+            # which avoids 421/403 behind reverse proxies by default.
+            self.app.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=False
+            )
+
     def get_streamable_http_app(self):
         """Get the FastMCP StreamableHTTP app for HTTP transport."""
         return self.app.streamable_http_app()
@@ -320,6 +345,7 @@ class WikiJSMCPServer:
             # Get the StreamableHTTP app and run it with uvicorn
             import uvicorn
 
+            self._configure_http_transport(bind_host=host)
             app = self.get_streamable_http_app()
 
             config = uvicorn.Config(app=app, host=host, port=port, log_level="info")

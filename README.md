@@ -177,6 +177,15 @@ If you're using a different MCP client or need custom settings, here's the confi
 - ✅ Check that the `.mcp.json` file exists
 - ✅ Try restarting Claude Code
 
+### `421 Misdirected Request` on `OPTIONS /mcp` (cloud/reverse proxy)
+- ✅ Set `MCP_ENABLE_DNS_REBINDING_PROTECTION=false` to disable strict Host/Origin checks (recommended default behind ingress)
+- ✅ Or keep protection enabled and set explicit values:
+  - `MCP_ENABLE_DNS_REBINDING_PROTECTION=true`
+  - `MCP_PUBLIC_HOST=your-public-hostname`
+  - `MCP_ALLOWED_HOSTS=your-public-hostname,your-public-hostname:*`
+  - `MCP_ALLOWED_ORIGINS=http://localhost:*,http://127.0.0.1:*` (add your real client origins as needed)
+- ✅ Keep `HTTP_HOST=0.0.0.0` for container binding; use `MCP_PUBLIC_HOST` for external hostname
+
 ## 📚 Available Tools Reference
 
 Here's what Claude can do once connected:

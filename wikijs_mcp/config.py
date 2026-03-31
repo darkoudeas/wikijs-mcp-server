@@ -19,6 +19,14 @@ class WikiJSConfig(BaseModel):
     http_port: int = Field(default=8000)
     cors_origins: list[str] = Field(default=["*"])
 
+    # MCP Streamable HTTP transport security configuration
+    # Use these for reverse-proxy/cloud deployments where Host/Origin differ
+    # from localhost defaults.
+    mcp_public_host: Optional[str] = Field(default=None)
+    mcp_enable_dns_rebinding_protection: bool = Field(default=False)
+    mcp_allowed_hosts: list[str] = Field(default_factory=list)
+    mcp_allowed_origins: list[str] = Field(default_factory=list)
+
     @classmethod
     def load_config(cls, env_file: str = ".env") -> "WikiJSConfig":
         """Load configuration from .env file."""
@@ -40,6 +48,24 @@ class WikiJSConfig(BaseModel):
                 os.getenv("CORS_ORIGINS", "*").split(",")
                 if os.getenv("CORS_ORIGINS")
                 else ["*"]
+            ),
+            mcp_public_host=os.getenv("MCP_PUBLIC_HOST") or None,
+            mcp_enable_dns_rebinding_protection=(
+                os.getenv("MCP_ENABLE_DNS_REBINDING_PROTECTION", "false").lower()
+                == "true"
+            ),
+            mcp_allowed_hosts=(
+                [item.strip() for item in os.getenv("MCP_ALLOWED_HOSTS", "").split(",")]
+                if os.getenv("MCP_ALLOWED_HOSTS")
+                else []
+            ),
+            mcp_allowed_origins=(
+                [
+                    item.strip()
+                    for item in os.getenv("MCP_ALLOWED_ORIGINS", "").split(",")
+                ]
+                if os.getenv("MCP_ALLOWED_ORIGINS")
+                else []
             ),
         )
 
