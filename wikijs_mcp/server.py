@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from mcp.server import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import TextContent
+from starlette.middleware.cors import CORSMiddleware
 from .client import WikiJSClient
 from .config import WikiJSConfig
 
@@ -318,7 +319,16 @@ class WikiJSMCPServer:
 
     def get_streamable_http_app(self):
         """Get the FastMCP StreamableHTTP app for HTTP transport."""
-        return self.app.streamable_http_app()
+        mcp_app = self.app.streamable_http_app()
+        # Wrap with CORS middleware so OPTIONS preflight requests are answered.
+        # The Mcp-Session-Id header must be exposed for browser/inspector clients.
+        return CORSMiddleware(
+            mcp_app,
+            allow_origins=self.config.cors_origins,
+            allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+            allow_headers=["*"],
+            expose_headers=["Mcp-Session-Id"],
+        )
 
     async def run_stdio(self):
         """Run the MCP server over stdio (for local use)."""

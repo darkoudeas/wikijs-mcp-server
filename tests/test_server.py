@@ -63,8 +63,8 @@ class TestWikiJSMCPServer:
 
         app = server.get_streamable_http_app()
         assert app is not None
-        # The app should be a Starlette/FastAPI app
-        assert hasattr(app, "routes")
+        # The app is a CORSMiddleware-wrapped ASGI callable
+        assert callable(app)
 
     @patch("wikijs_mcp.server.WikiJSConfig.load_config")
     @patch("wikijs_mcp.server.WikiJSClient")
